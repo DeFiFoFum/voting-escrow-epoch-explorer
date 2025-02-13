@@ -2,6 +2,20 @@
 
 A Next.js application for calculating Vote Escrow epochs. This tool helps users monitor different protocol phases and their respective epoch transitions.
 
+- [Vote Escrow Epoch Explorer](#vote-escrow-epoch-explorer)
+  - [Configuration](#configuration)
+    - [Structure](#structure)
+    - [Epoch System](#epoch-system)
+    - [Protocol Configuration](#protocol-configuration)
+    - [Usage](#usage)
+    - [Adding New Environments](#adding-new-environments)
+  - [Features](#features)
+  - [Getting Started](#getting-started)
+  - [Project Structure](#project-structure)
+  - [Development](#development)
+  - [Deploy on Vercel](#deploy-on-vercel)
+  - [Contributing](#contributing)
+
 ## Configuration
 
 The application supports environment-specific configurations in both TypeScript and JSON formats.
