@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { Toast, ToastConfig, ToastType } from "../types/toast";
+import { Toast, ToastConfig } from "../types/toast";
 
 interface ToastContextType {
   toasts: Toast[];

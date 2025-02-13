@@ -3,9 +3,7 @@
 import { EpochClock } from "@/components/EpochClock";
 import { ProtocolCard } from "@/components/ProtocolCard";
 import { protocols } from "@/config/protocols";
-import { getEpochBoundaries } from "@/lib/utils";
 import React, { useState } from "react";
-import { INITIAL_EPOCH_TIMESTAMP } from "@/config/protocols";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useTheme } from "@/lib/hooks/useTheme";
@@ -17,18 +15,6 @@ export default function Home() {
 
   const handleCollapseAll = () => {
     setExpandedProtocols(new Set());
-  };
-
-  const handleAccordionChange = (value: string) => {
-    setExpandedProtocols((prev: Set<string>) => {
-      const newSet = new Set(prev);
-      if (newSet.has(value)) {
-        newSet.delete(value);
-      } else {
-        newSet.add(value);
-      }
-      return newSet;
-    });
   };
 
   return (

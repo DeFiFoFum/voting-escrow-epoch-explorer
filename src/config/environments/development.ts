@@ -1,5 +1,3 @@
-import { Config } from "../schema";
-
 export const config = {
   protocols: [
     {

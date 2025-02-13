@@ -1,7 +1,7 @@
-import { Config, Protocol, validateConfig } from "./schema";
+import { Protocol, validateConfig } from "./schema";
 
 // Default to development environment unless specified
-const ENV = process.env.NEXT_PUBLIC_ENV || "development";
+// const ENV = process.env.NEXT_PUBLIC_ENV || "development";
 
 // Import environment config
 import { config as envConfig } from "./environments/development";

@@ -18,15 +18,12 @@ import {
 } from "@/lib/utils";
 import Image from "next/image";
 import { useTheme } from "@/lib/hooks/useTheme";
-import { INITIAL_EPOCH_TIMESTAMP } from "@/config/protocols";
 import { useToast } from "@/lib/hooks/ToastContext";
 import { useEpochStore } from "@/lib/stores/useEpochStore";
 
 interface ProtocolCardProps {
   protocol: Protocol;
 }
-
-const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
 export function ProtocolCard({ protocol }: ProtocolCardProps) {
   const { theme } = useTheme();
