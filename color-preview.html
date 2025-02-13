@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Color Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .theme {
+            flex: 1;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .dark {
+            background: #000;
+            color: white;
+        }
+
+        .light {
+            background: #fff;
+            color: #0F172A;
+        }
+
+        .gradient-bg {
+            position: absolute;
+            inset: 0;
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        .dark .gradient-bg {
+            background: linear-gradient(-45deg, 
+                #1a1a2e,
+                #16213e,
+                #0d1b2a,
+                #1f2937
+            );
+            opacity: 1;
+        }
+
+        .light .gradient-bg {
+            background: linear-gradient(-45deg,
+                #f0f9ff,
+                #e0f2fe,
+                #dbeafe,
+                #ffffff
+            );
+            opacity: 0.9;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .card {
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(12px);
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                       0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .dark .card {
+            background: linear-gradient(135deg, 
+                rgba(255,255,255,0.1),
+                rgba(255,255,255,0.05)
+            );
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .light .card {
+            background: linear-gradient(135deg,
+                rgba(255,255,255,0.9),
+                rgba(255,255,255,0.8)
+            );
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .dark .card:hover {
+            background: linear-gradient(135deg,
+                rgba(255,255,255,0.15),
+                rgba(255,255,255,0.08)
+            );
+            transform: translateY(-2px);
+        }
+
+        .light .card:hover {
+            background: linear-gradient(135deg,
+                rgba(255,255,255,0.95),
+                rgba(255,255,255,0.85)
+            );
+            transform: translateY(-2px);
+        }
+
+        .text-sample {
+            margin-bottom: 1rem;
+        }
+
+        .dark .text-sample h3 {
+            color: rgba(255,255,255,1);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .dark .text-sample p {
+            color: rgba(255,255,255,0.9);
+            line-height: 1.5;
+        }
+
+        .light .text-sample h3 {
+            color: rgba(15,23,42,1);
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .light .text-sample p {
+            color: rgba(15,23,42,0.9);
+            line-height: 1.5;
+        }
+
+        .protocol-colors {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .color-sample {
+            height: 80px;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+
+        .color-sample:hover {
+            transform: scale(1.05);
+        }
+
+        .button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            margin-right: 0.75rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .dark .button.primary {
+            background: linear-gradient(135deg, #3B82F6, #2563EB);
+            color: white;
+            box-shadow: 0 2px 4px rgba(59,130,246,0.3);
+        }
+
+        .dark .button.secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .light .button.primary {
+            background: linear-gradient(135deg, #2563EB, #1D4ED8);
+            color: white;
+            box-shadow: 0 2px 4px rgba(37,99,235,0.2);
+        }
+
+        .light .button.secondary {
+            background: rgba(0,0,0,0.05);
+            color: #0F172A;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+        }
+
+        .dark .button.primary:hover {
+            box-shadow: 0 4px 6px rgba(59,130,246,0.4);
+        }
+
+        .light .button.primary:hover {
+            box-shadow: 0 4px 6px rgba(37,99,235,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="theme dark">
+        <div class="gradient-bg"></div>
+        <div class="content">
+            <h1 class="title">Dark Theme</h1>
+            
+            <div class="card">
+                <div class="text-sample">
+                    <h3>Glass Card Effect</h3>
+                    <p>This card demonstrates the glass morphism effect with a subtle gradient and hover state. The background uses deep blues and navy colors.</p>
+                </div>
+                <button class="button primary">Primary Button</button>
+                <button class="button secondary">Secondary Button</button>
+            </div>
+
+            <div class="card">
+                <div class="text-sample">
+                    <h3>Text Contrast</h3>
+                    <p>Headers use 100% white with a subtle text shadow, while body text uses 90% opacity for optimal readability against the dark background.</p>
+                </div>
+            </div>
+
+            <div class="protocol-colors">
+                <div class="color-sample" style="background: linear-gradient(135deg, #3B82F6, #2563EB)">Blue</div>
+                <div class="color-sample" style="background: linear-gradient(135deg, #6366F1, #4F46E5)">Indigo</div>
+                <div class="color-sample" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED)">Purple</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="theme light">
+        <div class="gradient-bg"></div>
+        <div class="content">
+            <h1 class="title">Light Theme</h1>
+            
+            <div class="card">
+                <div class="text-sample">
+                    <h3>Glass Card Effect</h3>
+                    <p>This card demonstrates the glass morphism effect with a subtle gradient and hover state. The background uses soft blues and white.</p>
+                </div>
+                <button class="button primary">Primary Button</button>
+                <button class="button secondary">Secondary Button</button>
+            </div>
+
+            <div class="card">
+                <div class="text-sample">
+                    <h3>Text Contrast</h3>
+                    <p>Headers use rich slate color, while body text uses 90% opacity for optimal readability against the light background.</p>
+                </div>
+            </div>
+
+            <div class="protocol-colors">
+                <div class="color-sample" style="background: linear-gradient(135deg, #2563EB, #1D4ED8)">Blue</div>
+                <div class="color-sample" style="background: linear-gradient(135deg, #4F46E5, #4338CA)">Indigo</div>
+                <div class="color-sample" style="background: linear-gradient(135deg, #7C3AED, #6D28D9)">Purple</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
