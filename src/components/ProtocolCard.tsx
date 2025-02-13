@@ -1,25 +1,25 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { Protocol } from "@/config/schema";
+import React, { useState, useEffect } from 'react';
+import { Protocol } from '@/config/schema';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { Copy } from "lucide-react";
-import { 
-  copyToClipboard, 
-  formatUnixTimestamp, 
+} from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
+import { Copy } from 'lucide-react';
+import {
+  copyToClipboard,
+  formatUnixTimestamp,
   formatRelativeTime,
-  getTimeDifferenceInSeconds
-} from "@/lib/utils";
-import Image from "next/image";
-import { useTheme } from "@/lib/hooks/useTheme";
-import { useToast } from "@/lib/hooks/ToastContext";
-import { useEpochStore } from "@/lib/stores/useEpochStore";
+  getTimeDifferenceInSeconds,
+} from '@/lib/utils';
+import Image from 'next/image';
+import { useTheme } from '@/lib/hooks/useTheme';
+import { useToast } from '@/lib/hooks/ToastContext';
+import { useEpochStore } from '@/lib/stores/useEpochStore';
 
 interface ProtocolCardProps {
   protocol: Protocol;
@@ -28,70 +28,93 @@ interface ProtocolCardProps {
 export function ProtocolCard({ protocol }: ProtocolCardProps) {
   const { theme } = useTheme();
   const { success } = useToast();
-  const { 
-    globalEpoch, 
-    protocolOffsets, 
-    setProtocolOffset, 
+  const {
+    getCurrentTimestamp,
+    getDisplayEpoch,
     getEpochInfo,
-    getCurrentEpoch 
+    setProtocolEpoch,
+    incrementProtocolEpoch,
+    decrementProtocolEpoch,
+    resetProtocolEpoch,
   } = useEpochStore();
-  const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000));
+  const [currentTime, setCurrentTime] = useState(getCurrentTimestamp());
 
-  // Get protocol-specific offset or default to 0
-  const offset = protocolOffsets[protocol.id] || 0;
-  const localEpoch = globalEpoch + offset;
-  const currentEpoch = getCurrentEpoch();
+  // Get current and display epochs for this protocol
+  const displayEpoch = getDisplayEpoch(protocol.id, false); // false = use protocol-specific offset
 
-  // Calculate total offset from current epoch
-  const totalOffset = localEpoch - currentEpoch;
-
-  // Get epoch information
-  const { epochStart: localEpochStart, epochEnd: localEpochEnd } = getEpochInfo(localEpoch);
+  // Get epoch information including relative difference
+  const {
+    epochStart: localEpochStart,
+    epochEnd: localEpochEnd,
+    epochDiff: relativeEpoch,
+  } = getEpochInfo(protocol.id, displayEpoch);
 
   // Update current time every second
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(Math.floor(Date.now() / 1000));
+      setCurrentTime(getCurrentTimestamp());
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [getCurrentTimestamp]);
 
-  // Handle local epoch adjustments
+  // Handle epoch adjustments
   const handleEpochInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    if (!isNaN(value)) {
-      setProtocolOffset(protocol.id, value - globalEpoch);
+    try {
+      const value = parseInt(e.target.value);
+      if (!isNaN(value)) {
+        setProtocolEpoch(protocol.id, value);
+      }
+    } catch (error) {
+      console.error('Error handling epoch input change:', error);
     }
   };
 
   const handleCopyTimestamp = async (timestamp: number) => {
-    if (typeof window === "undefined") return;
-    await copyToClipboard(timestamp.toString());
-    success("Unix timestamp copied");
+    try {
+      if (typeof window === 'undefined') return;
+      const copied = await copyToClipboard(timestamp.toString());
+      if (copied) {
+        success('Unix timestamp copied');
+      }
+    } catch (error) {
+      console.error('Error copying timestamp:', error);
+    }
   };
 
   const handleCopyDiff = async (timestamp: number) => {
-    if (typeof window === "undefined") return;
-    const diff = getTimeDifferenceInSeconds(timestamp, currentTime);
-    await copyToClipboard(diff.toString());
-    success("Unix time diff copied");
+    try {
+      if (typeof window === 'undefined') return;
+      const diff = getTimeDifferenceInSeconds(timestamp, currentTime);
+      const copied = await copyToClipboard(diff.toString());
+      if (copied) {
+        success('Unix time diff copied');
+      }
+    } catch (error) {
+      console.error('Error copying time difference:', error);
+    }
   };
 
-  // Calculate display labels
-  const offsetLabel = totalOffset === 0 ? "" : totalOffset > 0 ? `(+${totalOffset})` : `(${totalOffset})`;
+  // Calculate display labels based on relative epoch
+  const offsetLabel =
+    relativeEpoch === 0 ? '' : relativeEpoch > 0 ? `(+${relativeEpoch})` : `(${relativeEpoch})`;
 
   return (
     <div className="w-full rounded-xl overflow-hidden glass-card">
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value={protocol.id} className="border-none">
-          <AccordionTrigger className="hover:no-underline px-6 py-4">
+          <AccordionTrigger
+            data-testid={`protocol-${protocol.id}-trigger`}
+            className="hover:no-underline px-6 py-4"
+          >
             <div className="flex items-center space-x-4 w-full">
               {protocol.logo && (
-                <div className={`relative w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center ${
-                  theme === 'dark'
-                    ? 'bg-gradient-to-br from-white/10 to-white/5'
-                    : 'bg-gradient-to-br from-slate-100 to-white'
-                }`}>
+                <div
+                  className={`relative w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center ${
+                    theme === 'dark'
+                      ? 'bg-gradient-to-br from-white/10 to-white/5'
+                      : 'bg-gradient-to-br from-slate-100 to-white'
+                  }`}
+                >
                   <div className="relative w-8 h-8">
                     <Image
                       src={protocol.logo}
@@ -103,7 +126,7 @@ export function ProtocolCard({ protocol }: ProtocolCardProps) {
                 </div>
               )}
               <div className="flex-1 text-left">
-                <h3 
+                <h3
                   className={`text-xl font-semibold ${
                     theme === 'dark' ? 'text-white' : 'text-slate-900'
                   } drop-shadow-sm`}
@@ -111,59 +134,121 @@ export function ProtocolCard({ protocol }: ProtocolCardProps) {
                 >
                   {protocol.name} {offsetLabel}
                 </h3>
-                <p className={
-                  theme === 'dark' ? 'text-sm text-white/70' : 'text-sm text-slate-600'
-                }>
-                  Epoch {localEpoch}
+                <p
+                  data-testid={`protocol-epoch-${protocol.id}`}
+                  className={theme === 'dark' ? 'text-sm text-white/70' : 'text-sm text-slate-600'}
+                >
+                  Epoch {displayEpoch}
                 </p>
               </div>
             </div>
           </AccordionTrigger>
-          <AccordionContent>
+          <AccordionContent data-testid={`protocol-${protocol.id}-content`}>
             <div className="space-y-6 px-6 pb-6">
-              <div className="flex items-center space-x-4">
-                <label className={
-                  theme === 'dark' ? 'text-sm font-medium text-white' : 'text-sm font-medium text-slate-900'
-                }>
-                  Epoch Number:
-                </label>
-                <input
-                  type="number"
-                  value={localEpoch}
-                  onChange={handleEpochInputChange}
-                  className={`
-                    px-3 py-2 rounded-lg w-28 text-center font-mono
-                    focus:outline-none focus:ring-2 focus:ring-blue-500/50
-                    ${theme === 'dark'
-                      ? 'bg-white/10 text-white border border-white/20'
-                      : 'bg-slate-100/80 text-slate-900 border border-slate-200/50'
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-center space-x-4">
+                  <label
+                    className={
+                      theme === 'dark'
+                        ? 'text-sm font-medium text-white'
+                        : 'text-sm font-medium text-slate-900'
                     }
-                  `}
-                  min="0"
-                />
+                  >
+                    Epoch Number:
+                  </label>
+                  <input
+                    type="number"
+                    value={displayEpoch}
+                    onChange={handleEpochInputChange}
+                    className={`
+                      px-3 py-2 rounded-lg w-28 text-center font-mono
+                      focus:outline-none focus:ring-2 focus:ring-blue-500/50
+                      ${
+                        theme === 'dark'
+                          ? 'bg-white/10 text-white border border-white/20'
+                          : 'bg-slate-100/80 text-slate-900 border border-slate-200/50'
+                      }
+                    `}
+                    min="0"
+                  />
+                </div>
+                <div className="flex items-center justify-center space-x-4">
+                  <Button
+                    data-testid={`protocol-increment-${protocol.id}`}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => incrementProtocolEpoch(protocol.id)}
+                    className={
+                      theme === 'dark'
+                        ? 'text-white/70 hover:text-white hover:bg-white/10'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                    }
+                  >
+                    +1 Epoch
+                  </Button>
+                  <Button
+                    data-testid={`protocol-decrement-${protocol.id}`}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => decrementProtocolEpoch(protocol.id)}
+                    className={
+                      theme === 'dark'
+                        ? 'text-white/70 hover:text-white hover:bg-white/10'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                    }
+                  >
+                    -1 Epoch
+                  </Button>
+                  <Button
+                    data-testid={`protocol-reset-${protocol.id}`}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => resetProtocolEpoch(protocol.id)}
+                    className={
+                      theme === 'dark'
+                        ? 'text-white/70 hover:text-white hover:bg-white/10'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                    }
+                  >
+                    Reset
+                  </Button>
+                </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-6">
                 <div className="p-4 rounded-lg glass-card">
-                  <p className={
-                    theme === 'dark' ? 'text-sm font-medium mb-2 text-white' : 'text-sm font-medium mb-2 text-slate-900'
-                  }>
+                  <p
+                    className={
+                      theme === 'dark'
+                        ? 'text-sm font-medium mb-2 text-white'
+                        : 'text-sm font-medium mb-2 text-slate-900'
+                    }
+                  >
                     Start Time
                   </p>
                   <div className="flex flex-col space-y-2">
-                    <span className={
-                      theme === 'dark' ? 'text-sm font-mono text-white/80' : 'text-sm font-mono text-slate-700'
-                    }>
+                    <span
+                      data-testid={`epoch-start-${protocol.id}`}
+                      className={
+                        theme === 'dark'
+                          ? 'text-sm font-mono text-white/80'
+                          : 'text-sm font-mono text-slate-700'
+                      }
+                    >
                       {localEpochStart}
                     </span>
-                    <span className={
-                      theme === 'dark' ? 'text-xs text-white/60' : 'text-xs text-slate-500'
-                    }>
+                    <span
+                      className={
+                        theme === 'dark' ? 'text-xs text-white/60' : 'text-xs text-slate-500'
+                      }
+                    >
                       {formatUnixTimestamp(localEpochStart)}
                     </span>
-                    <span className={
-                      theme === 'dark' ? 'text-xs text-white/60' : 'text-xs text-slate-500'
-                    }>
+                    <span
+                      className={
+                        theme === 'dark' ? 'text-xs text-white/60' : 'text-xs text-slate-500'
+                      }
+                    >
                       {formatRelativeTime(localEpochStart, currentTime)}
                     </span>
                     <div className="flex space-x-2">
@@ -196,27 +281,40 @@ export function ProtocolCard({ protocol }: ProtocolCardProps) {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="p-4 rounded-lg glass-card">
-                  <p className={
-                    theme === 'dark' ? 'text-sm font-medium mb-2 text-white' : 'text-sm font-medium mb-2 text-slate-900'
-                  }>
+                  <p
+                    className={
+                      theme === 'dark'
+                        ? 'text-sm font-medium mb-2 text-white'
+                        : 'text-sm font-medium mb-2 text-slate-900'
+                    }
+                  >
                     End Time
                   </p>
                   <div className="flex flex-col space-y-2">
-                    <span className={
-                      theme === 'dark' ? 'text-sm font-mono text-white/80' : 'text-sm font-mono text-slate-700'
-                    }>
+                    <span
+                      data-testid={`epoch-end-${protocol.id}`}
+                      className={
+                        theme === 'dark'
+                          ? 'text-sm font-mono text-white/80'
+                          : 'text-sm font-mono text-slate-700'
+                      }
+                    >
                       {localEpochEnd}
                     </span>
-                    <span className={
-                      theme === 'dark' ? 'text-xs text-white/60' : 'text-xs text-slate-500'
-                    }>
+                    <span
+                      className={
+                        theme === 'dark' ? 'text-xs text-white/60' : 'text-xs text-slate-500'
+                      }
+                    >
                       {formatUnixTimestamp(localEpochEnd)}
                     </span>
-                    <span className={
-                      theme === 'dark' ? 'text-xs text-white/60' : 'text-xs text-slate-500'
-                    }>
+                    <span
+                      className={
+                        theme === 'dark' ? 'text-xs text-white/60' : 'text-xs text-slate-500'
+                      }
+                    >
                       {formatRelativeTime(localEpochEnd, currentTime)}
                     </span>
                     <div className="flex space-x-2">

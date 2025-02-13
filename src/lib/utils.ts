@@ -1,5 +1,5 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -8,26 +8,21 @@ export function cn(...inputs: ClassValue[]) {
 export function formatUnixTimestamp(timestamp: number): string {
   const date = new Date(timestamp * 1000);
   const timeZoneOffset = -date.getTimezoneOffset() / 60;
-  const timeZoneString = `UTC${
-    timeZoneOffset >= 0 ? "+" : ""
-  }${timeZoneOffset}`;
+  const timeZoneString = `UTC${timeZoneOffset >= 0 ? '+' : ''}${timeZoneOffset}`;
 
-  return `${date.toLocaleString("en-US", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  })} ${date.toLocaleTimeString("en-US", {
+  return `${date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })} ${date.toLocaleTimeString('en-US', {
     hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
   })} (${timeZoneString})`;
 }
 
-export function formatRelativeTime(
-  targetTimestamp: number,
-  currentTimestamp: number
-): string {
+export function formatRelativeTime(targetTimestamp: number, currentTimestamp: number): string {
   const diffSeconds = targetTimestamp - currentTimestamp;
   const isInFuture = diffSeconds > 0;
   const absDiff = Math.abs(diffSeconds);
@@ -43,7 +38,7 @@ export function formatRelativeTime(
   if (minutes > 0) parts.push(`${minutes}m`);
   if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
 
-  return `${parts.join(" ")} ${isInFuture ? "until" : "since"}`;
+  return `${parts.join(' ')} ${isInFuture ? 'until' : 'since'}`;
 }
 
 export function getTimeDifferenceInSeconds(
@@ -53,10 +48,7 @@ export function getTimeDifferenceInSeconds(
   return targetTimestamp - currentTimestamp;
 }
 
-export function getCurrentEpoch(
-  currentTimestamp: number,
-  epochStartTimestamp: number
-): number {
+export function getCurrentEpoch(currentTimestamp: number, epochStartTimestamp: number): number {
   const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
   return Math.floor((currentTimestamp - epochStartTimestamp) / WEEK_IN_SECONDS);
 }
@@ -87,25 +79,29 @@ export function getEpochBoundaries(currentTimestamp: number): {
   return { start, end };
 }
 
-export async function copyToClipboard(text: string) {
-  if (typeof window === "undefined") return;
+export async function copyToClipboard(text: string): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
 
   try {
     await navigator.clipboard.writeText(text);
+    return true;
   } catch (err) {
-    console.error("Failed to copy text: ", err);
+    console.error('Failed to copy text: ', err);
     // Fallback copy method
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-    document.body.appendChild(textarea);
-    textarea.select();
     try {
-      document.execCommand("copy");
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const success = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      if (!success) throw new Error('execCommand copy failed');
+      return true;
     } catch (err) {
-      console.error("Fallback copy failed: ", err);
+      console.error('Fallback copy failed: ', err);
+      return false;
     }
-    document.body.removeChild(textarea);
   }
 }
