@@ -1,6 +1,6 @@
-# Lynex Epoch Explorer
+# Vote Escrow Epoch Explorer
 
-A Next.js application for visualizing and tracking protocol epochs in the Lynex ecosystem. This tool helps users monitor different protocol phases and their respective epoch transitions.
+A Next.js application for calculating Vote Escrow epochs. This tool helps users monitor different protocol phases and their respective epoch transitions.
 
 ## Features
 
