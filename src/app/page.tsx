@@ -9,6 +9,7 @@ import { INITIAL_EPOCH_TIMESTAMP } from "@/config/protocols";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useTheme } from "@/lib/hooks/useTheme";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Home() {
   const { theme } = useTheme();
@@ -67,6 +68,11 @@ export default function Home() {
           animation: 'gradient 15s ease infinite'
         }}
       />
+
+      {/* Theme Toggle */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 py-8">

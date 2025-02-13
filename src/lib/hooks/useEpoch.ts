@@ -5,15 +5,21 @@ import { getEpochBoundaries } from "@/lib/utils";
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
 export function useEpoch(onEpochChange?: (epochNumber: number) => void) {
-  const initialTimestamp = useRef(Math.floor(Date.now() / 1000)).current;
-  const [currentTimestamp, setCurrentTimestamp] = useState(initialTimestamp);
+  const now = useRef(Math.floor(Date.now() / 1000)).current;
+  const [currentTimestamp, setCurrentTimestamp] = useState(now);
+
+  // Find the most recent Thursday at 00:00 UTC
+  const currentThursday = getEpochBoundaries(currentTimestamp).start;
+
+  // Calculate current epoch based on the most recent Thursday
   const [selectedEpochNumber, setSelectedEpochNumber] = useState(
-    Math.floor((initialTimestamp - INITIAL_EPOCH_TIMESTAMP) / WEEK_IN_SECONDS)
+    Math.floor((currentThursday - INITIAL_EPOCH_TIMESTAMP) / WEEK_IN_SECONDS)
   );
 
   // Calculate current epoch based on current timestamp
   const currentEpoch = Math.floor(
-    (currentTimestamp - INITIAL_EPOCH_TIMESTAMP) / WEEK_IN_SECONDS
+    (getEpochBoundaries(currentTimestamp).start - INITIAL_EPOCH_TIMESTAMP) /
+      WEEK_IN_SECONDS
   );
 
   // Calculate epoch difference

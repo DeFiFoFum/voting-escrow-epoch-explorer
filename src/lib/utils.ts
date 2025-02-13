@@ -7,6 +7,11 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatUnixTimestamp(timestamp: number): string {
   const date = new Date(timestamp * 1000);
+  const timeZoneOffset = -date.getTimezoneOffset() / 60;
+  const timeZoneString = `UTC${
+    timeZoneOffset >= 0 ? "+" : ""
+  }${timeZoneOffset}`;
+
   return `${date.toLocaleString("en-US", {
     year: "numeric",
     month: "2-digit",
@@ -16,7 +21,7 @@ export function formatUnixTimestamp(timestamp: number): string {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-  })}`;
+  })} (${timeZoneString})`;
 }
 
 export function getCurrentEpoch(

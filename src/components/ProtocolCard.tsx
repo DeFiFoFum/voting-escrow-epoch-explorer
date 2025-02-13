@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Protocol } from "@/config/protocols";
+import { Protocol } from "@/config/schema";
 import {
   Accordion,
   AccordionContent,
@@ -34,10 +34,17 @@ export function ProtocolCard({
 }: ProtocolCardProps) {
   const { theme } = useTheme();
   const { success } = useToast();
-  const [localEpoch, setLocalEpoch] = useState(Math.max(0, currentEpoch - protocol.startEpoch));
+  // Calculate local epoch based on reference point
+  const [localEpoch, setLocalEpoch] = useState(() => {
+    const epochsSinceReference = Math.floor(
+      (globalEpochStart - protocol.referenceTimestamp) / WEEK_IN_SECONDS
+    );
+    return Math.max(0, protocol.referenceEpoch + epochsSinceReference);
+  });
 
   // Calculate local timestamps based on local epoch
-  const localTimestamp = INITIAL_EPOCH_TIMESTAMP + (localEpoch + protocol.startEpoch) * WEEK_IN_SECONDS;
+  const epochsFromReference = localEpoch - protocol.referenceEpoch;
+  const localTimestamp = protocol.referenceTimestamp + (epochsFromReference * WEEK_IN_SECONDS);
   const { start: localEpochStart, end: localEpochEnd } = getEpochBoundaries(localTimestamp);
 
   const handleEpochInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
