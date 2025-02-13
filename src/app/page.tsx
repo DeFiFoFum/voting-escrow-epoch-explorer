@@ -13,26 +13,14 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Home() {
   const { theme } = useTheme();
-  const [currentEpoch, setCurrentEpoch] = useState<number>(
-    Math.floor((Date.now() / 1000 - INITIAL_EPOCH_TIMESTAMP) / (7 * 24 * 60 * 60))
-  );
   const [expandedProtocols, setExpandedProtocols] = useState<Set<string>>(new Set());
-
-  const currentTimestamp = Math.floor(Date.now() / 1000);
-  const { start: epochStart, end: epochEnd } = getEpochBoundaries(currentTimestamp);
-
-  const handleEpochChange = React.useCallback((newEpoch: number) => {
-    requestAnimationFrame(() => {
-      setCurrentEpoch(newEpoch);
-    });
-  }, []);
 
   const handleCollapseAll = () => {
     setExpandedProtocols(new Set());
   };
 
   const handleAccordionChange = (value: string) => {
-    setExpandedProtocols(prev => {
+    setExpandedProtocols((prev: Set<string>) => {
       const newSet = new Set(prev);
       if (newSet.has(value)) {
         newSet.delete(value);
@@ -76,7 +64,7 @@ export default function Home() {
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 py-8">
-        <EpochClock onEpochChange={handleEpochChange} />
+        <EpochClock />
 
         <div className="mt-12 max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
@@ -111,10 +99,6 @@ export default function Home() {
               <ProtocolCard
                 key={protocol.id}
                 protocol={protocol}
-                currentEpoch={currentEpoch}
-                epochStart={epochStart}
-                epochEnd={epochEnd}
-                onEpochChange={handleEpochChange}
               />
             ))}
           </div>

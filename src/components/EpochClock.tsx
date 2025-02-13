@@ -5,26 +5,35 @@ import { useTheme } from "@/lib/hooks/useTheme";
 import { Button } from "@/components/ui/button";
 import { formatUnixTimestamp, copyToClipboard } from "@/lib/utils";
 import { Copy, ChevronLeft, ChevronRight } from "lucide-react";
-import { useEpoch } from "@/lib/hooks/useEpoch";
+import { useEpochStore } from "@/lib/stores/useEpochStore";
 import { useToast } from "@/lib/hooks/ToastContext";
 
-interface EpochClockProps {
-  onEpochChange?: (epochNumber: number) => void;
-}
-
-export function EpochClock({ onEpochChange }: EpochClockProps) {
+export function EpochClock() {
   const { theme } = useTheme();
   const { success } = useToast();
-  const {
-    currentTimestamp,
-    currentEpochNumber,
-    epochStart,
-    epochEnd,
-    handlePreviousEpoch,
-    handleNextEpoch,
-    handleResetToCurrentEpoch,
-    epochDiff,
-  } = useEpoch(onEpochChange);
+  const { 
+    globalEpoch,
+    setGlobalEpoch,
+    getCurrentEpoch,
+    getEpochInfo,
+    resetAllOffsets
+  } = useEpochStore();
+
+  const currentTimestamp = Math.floor(Date.now() / 1000);
+  const { epochStart, epochEnd, epochDiff } = getEpochInfo(globalEpoch);
+
+  const handlePreviousEpoch = () => {
+    setGlobalEpoch(globalEpoch - 1);
+  };
+
+  const handleNextEpoch = () => {
+    setGlobalEpoch(globalEpoch + 1);
+  };
+
+  const handleResetToCurrentEpoch = () => {
+    setGlobalEpoch(getCurrentEpoch());
+    resetAllOffsets();
+  };
 
   const [currentTime, setCurrentTime] = useState(() => new Date());
 
@@ -38,7 +47,7 @@ export function EpochClock({ onEpochChange }: EpochClockProps) {
   const handleCopy = async (text: string) => {
     if (typeof window === "undefined") return;
     await copyToClipboard(text);
-    success("Copied Text");
+    success("Timestamp Copied");
   };
 
   const timeString = currentTime.toLocaleString("en-US", {

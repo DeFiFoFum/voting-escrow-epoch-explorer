@@ -24,6 +24,35 @@ export function formatUnixTimestamp(timestamp: number): string {
   })} (${timeZoneString})`;
 }
 
+export function formatRelativeTime(
+  targetTimestamp: number,
+  currentTimestamp: number
+): string {
+  const diffSeconds = targetTimestamp - currentTimestamp;
+  const isInFuture = diffSeconds > 0;
+  const absDiff = Math.abs(diffSeconds);
+
+  const days = Math.floor(absDiff / (24 * 60 * 60));
+  const hours = Math.floor((absDiff % (24 * 60 * 60)) / (60 * 60));
+  const minutes = Math.floor((absDiff % (60 * 60)) / 60);
+  const seconds = Math.floor(absDiff % 60);
+
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
+
+  return `${parts.join(" ")} ${isInFuture ? "until" : "since"}`;
+}
+
+export function getTimeDifferenceInSeconds(
+  targetTimestamp: number,
+  currentTimestamp: number
+): number {
+  return targetTimestamp - currentTimestamp;
+}
+
 export function getCurrentEpoch(
   currentTimestamp: number,
   epochStartTimestamp: number

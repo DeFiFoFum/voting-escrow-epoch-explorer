@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Protocol } from "@/config/schema";
 import {
   Accordion,
@@ -10,55 +10,78 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
-import { copyToClipboard, formatUnixTimestamp, getEpochBoundaries } from "@/lib/utils";
+import { 
+  copyToClipboard, 
+  formatUnixTimestamp, 
+  formatRelativeTime,
+  getTimeDifferenceInSeconds
+} from "@/lib/utils";
 import Image from "next/image";
 import { useTheme } from "@/lib/hooks/useTheme";
 import { INITIAL_EPOCH_TIMESTAMP } from "@/config/protocols";
 import { useToast } from "@/lib/hooks/ToastContext";
+import { useEpochStore } from "@/lib/stores/useEpochStore";
 
 interface ProtocolCardProps {
   protocol: Protocol;
-  currentEpoch: number;
-  epochStart: number;
-  epochEnd: number;
-  onEpochChange: (epochNumber: number) => void;
 }
 
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
-export function ProtocolCard({
-  protocol,
-  currentEpoch,
-  epochStart: globalEpochStart,
-  epochEnd: globalEpochEnd,
-}: ProtocolCardProps) {
+export function ProtocolCard({ protocol }: ProtocolCardProps) {
   const { theme } = useTheme();
   const { success } = useToast();
-  // Calculate local epoch based on reference point
-  const [localEpoch, setLocalEpoch] = useState(() => {
-    const epochsSinceReference = Math.floor(
-      (globalEpochStart - protocol.referenceTimestamp) / WEEK_IN_SECONDS
-    );
-    return Math.max(0, protocol.referenceEpoch + epochsSinceReference);
-  });
+  const { 
+    globalEpoch, 
+    protocolOffsets, 
+    setProtocolOffset, 
+    getEpochInfo,
+    getCurrentEpoch 
+  } = useEpochStore();
+  const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000));
 
-  // Calculate local timestamps based on local epoch
-  const epochsFromReference = localEpoch - protocol.referenceEpoch;
-  const localTimestamp = protocol.referenceTimestamp + (epochsFromReference * WEEK_IN_SECONDS);
-  const { start: localEpochStart, end: localEpochEnd } = getEpochBoundaries(localTimestamp);
+  // Get protocol-specific offset or default to 0
+  const offset = protocolOffsets[protocol.id] || 0;
+  const localEpoch = globalEpoch + offset;
+  const currentEpoch = getCurrentEpoch();
 
+  // Calculate total offset from current epoch
+  const totalOffset = localEpoch - currentEpoch;
+
+  // Get epoch information
+  const { epochStart: localEpochStart, epochEnd: localEpochEnd } = getEpochInfo(localEpoch);
+
+  // Update current time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Math.floor(Date.now() / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Handle local epoch adjustments
   const handleEpochInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
-    if (!isNaN(value) && value >= 0) {
-      setLocalEpoch(value);
+    if (!isNaN(value)) {
+      setProtocolOffset(protocol.id, value - globalEpoch);
     }
   };
 
-  const handleCopy = async (text: string) => {
+  const handleCopyTimestamp = async (timestamp: number) => {
     if (typeof window === "undefined") return;
-    await copyToClipboard(text);
-    success("Copied Text");
+    await copyToClipboard(timestamp.toString());
+    success("Unix timestamp copied");
   };
+
+  const handleCopyDiff = async (timestamp: number) => {
+    if (typeof window === "undefined") return;
+    const diff = getTimeDifferenceInSeconds(timestamp, currentTime);
+    await copyToClipboard(diff.toString());
+    success("Unix time diff copied");
+  };
+
+  // Calculate display labels
+  const offsetLabel = totalOffset === 0 ? "" : totalOffset > 0 ? `(+${totalOffset})` : `(${totalOffset})`;
 
   return (
     <div className="w-full rounded-xl overflow-hidden glass-card">
@@ -89,7 +112,7 @@ export function ProtocolCard({
                   } drop-shadow-sm`}
                   style={{ color: protocol.color }}
                 >
-                  {protocol.name}
+                  {protocol.name} {offsetLabel}
                 </h3>
                 <p className={
                   theme === 'dark' ? 'text-sm text-white/70' : 'text-sm text-slate-600'
@@ -141,19 +164,39 @@ export function ProtocolCard({
                     }>
                       {formatUnixTimestamp(localEpochStart)}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleCopy(localEpochStart.toString())}
-                      className={
-                        theme === 'dark'
-                          ? 'w-fit text-white/70 hover:text-white hover:bg-white/10'
-                          : 'w-fit text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                      }
-                    >
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copy
-                    </Button>
+                    <span className={
+                      theme === 'dark' ? 'text-xs text-white/60' : 'text-xs text-slate-500'
+                    }>
+                      {formatRelativeTime(localEpochStart, currentTime)}
+                    </span>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyTimestamp(localEpochStart)}
+                        className={
+                          theme === 'dark'
+                            ? 'w-fit text-white/70 hover:text-white hover:bg-white/10'
+                            : 'w-fit text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                        }
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copy Time
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyDiff(localEpochStart)}
+                        className={
+                          theme === 'dark'
+                            ? 'w-fit text-white/70 hover:text-white hover:bg-white/10'
+                            : 'w-fit text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                        }
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copy Diff
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 
@@ -174,19 +217,39 @@ export function ProtocolCard({
                     }>
                       {formatUnixTimestamp(localEpochEnd)}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleCopy(localEpochEnd.toString())}
-                      className={
-                        theme === 'dark'
-                          ? 'w-fit text-white/70 hover:text-white hover:bg-white/10'
-                          : 'w-fit text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-                      }
-                    >
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copy
-                    </Button>
+                    <span className={
+                      theme === 'dark' ? 'text-xs text-white/60' : 'text-xs text-slate-500'
+                    }>
+                      {formatRelativeTime(localEpochEnd, currentTime)}
+                    </span>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyTimestamp(localEpochEnd)}
+                        className={
+                          theme === 'dark'
+                            ? 'w-fit text-white/70 hover:text-white hover:bg-white/10'
+                            : 'w-fit text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                        }
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copy Time
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopyDiff(localEpochEnd)}
+                        className={
+                          theme === 'dark'
+                            ? 'w-fit text-white/70 hover:text-white hover:bg-white/10'
+                            : 'w-fit text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                        }
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copy Diff
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
