@@ -87,25 +87,29 @@ export function getEpochBoundaries(currentTimestamp: number): {
   return { start, end };
 }
 
-export async function copyToClipboard(text: string) {
-  if (typeof window === "undefined") return;
+export async function copyToClipboard(text: string): Promise<boolean> {
+  if (typeof window === "undefined") return false;
 
   try {
     await navigator.clipboard.writeText(text);
+    return true;
   } catch (err) {
     console.error("Failed to copy text: ", err);
     // Fallback copy method
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-    document.body.appendChild(textarea);
-    textarea.select();
     try {
-      document.execCommand("copy");
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const success = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (!success) throw new Error("execCommand copy failed");
+      return true;
     } catch (err) {
       console.error("Fallback copy failed: ", err);
+      return false;
     }
-    document.body.removeChild(textarea);
   }
 }

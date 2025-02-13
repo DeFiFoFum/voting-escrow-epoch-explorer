@@ -29,56 +29,70 @@ export function ProtocolCard({ protocol }: ProtocolCardProps) {
   const { theme } = useTheme();
   const { success } = useToast();
   const { 
-    globalEpoch, 
-    protocolOffsets, 
-    setProtocolOffset, 
+    getCurrentTimestamp,
+    getDisplayEpoch,
     getEpochInfo,
-    getCurrentEpoch 
+    setProtocolEpoch
   } = useEpochStore();
-  const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000));
+  const [currentTime, setCurrentTime] = useState(getCurrentTimestamp());
 
-  // Get protocol-specific offset or default to 0
-  const offset = protocolOffsets[protocol.id] || 0;
-  const localEpoch = globalEpoch + offset;
-  const currentEpoch = getCurrentEpoch();
+  // Get current and display epochs for this protocol
+  const displayEpoch = getDisplayEpoch(protocol.id, false); // false = use protocol-specific offset
 
-  // Calculate total offset from current epoch
-  const totalOffset = localEpoch - currentEpoch;
-
-  // Get epoch information
-  const { epochStart: localEpochStart, epochEnd: localEpochEnd } = getEpochInfo(localEpoch);
+  // Get epoch information including relative difference
+  const { 
+    epochStart: localEpochStart, 
+    epochEnd: localEpochEnd,
+    epochDiff: relativeEpoch 
+  } = getEpochInfo(protocol.id, displayEpoch);
 
   // Update current time every second
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(Math.floor(Date.now() / 1000));
+      setCurrentTime(getCurrentTimestamp());
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [getCurrentTimestamp]);
 
-  // Handle local epoch adjustments
+  // Handle epoch adjustments
   const handleEpochInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    if (!isNaN(value)) {
-      setProtocolOffset(protocol.id, value - globalEpoch);
+    try {
+      const value = parseInt(e.target.value);
+      if (!isNaN(value)) {
+        setProtocolEpoch(protocol.id, value);
+      }
+    } catch (error) {
+      console.error("Error handling epoch input change:", error);
     }
   };
 
   const handleCopyTimestamp = async (timestamp: number) => {
-    if (typeof window === "undefined") return;
-    await copyToClipboard(timestamp.toString());
-    success("Unix timestamp copied");
+    try {
+      if (typeof window === "undefined") return;
+      const copied = await copyToClipboard(timestamp.toString());
+      if (copied) {
+        success("Unix timestamp copied");
+      }
+    } catch (error) {
+      console.error("Error copying timestamp:", error);
+    }
   };
 
   const handleCopyDiff = async (timestamp: number) => {
-    if (typeof window === "undefined") return;
-    const diff = getTimeDifferenceInSeconds(timestamp, currentTime);
-    await copyToClipboard(diff.toString());
-    success("Unix time diff copied");
+    try {
+      if (typeof window === "undefined") return;
+      const diff = getTimeDifferenceInSeconds(timestamp, currentTime);
+      const copied = await copyToClipboard(diff.toString());
+      if (copied) {
+        success("Unix time diff copied");
+      }
+    } catch (error) {
+      console.error("Error copying time difference:", error);
+    }
   };
 
-  // Calculate display labels
-  const offsetLabel = totalOffset === 0 ? "" : totalOffset > 0 ? `(+${totalOffset})` : `(${totalOffset})`;
+  // Calculate display labels based on relative epoch
+  const offsetLabel = relativeEpoch === 0 ? "" : relativeEpoch > 0 ? `(+${relativeEpoch})` : `(${relativeEpoch})`;
 
   return (
     <div className="w-full rounded-xl overflow-hidden glass-card">
@@ -114,7 +128,7 @@ export function ProtocolCard({ protocol }: ProtocolCardProps) {
                 <p className={
                   theme === 'dark' ? 'text-sm text-white/70' : 'text-sm text-slate-600'
                 }>
-                  Epoch {localEpoch}
+                  Epoch {displayEpoch}
                 </p>
               </div>
             </div>
@@ -129,7 +143,7 @@ export function ProtocolCard({ protocol }: ProtocolCardProps) {
                 </label>
                 <input
                   type="number"
-                  value={localEpoch}
+                  value={displayEpoch}
                   onChange={handleEpochInputChange}
                   className={`
                     px-3 py-2 rounded-lg w-28 text-center font-mono

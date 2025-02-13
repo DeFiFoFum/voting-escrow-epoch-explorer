@@ -1,78 +1,159 @@
 import { create } from "zustand";
-import { INITIAL_EPOCH_TIMESTAMP } from "@/config/protocols";
+import {
+  protocols,
+  getProtocolEpoch,
+  WEEK_IN_SECONDS,
+} from "@/config/protocols";
 import { getEpochBoundaries } from "@/lib/utils";
 
-const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
-
 interface EpochStore {
-  globalEpoch: number;
+  globalOffset: number;
   protocolOffsets: Record<string, number>;
-  setGlobalEpoch: (epoch: number) => void;
-  setProtocolOffset: (protocolId: string, offset: number) => void;
-  resetAllOffsets: () => void;
-  getCurrentEpoch: () => number;
-  getEpochInfo: (epochNumber: number) => {
+  getCurrentTimestamp: () => number;
+  getCurrentEpoch: (protocolId: string) => number;
+  getDisplayEpoch: (protocolId: string, useGlobal?: boolean) => number;
+  incrementGlobalEpoch: () => void;
+  decrementGlobalEpoch: () => void;
+  resetGlobalEpoch: () => void;
+  incrementProtocolEpoch: (protocolId: string) => void;
+  decrementProtocolEpoch: (protocolId: string) => void;
+  resetProtocolEpoch: (protocolId: string) => void;
+  setProtocolEpoch: (protocolId: string, targetEpoch: number) => void;
+  getEpochInfo: (
+    protocolId: string,
+    epochNumber: number
+  ) => {
     epochStart: number;
     epochEnd: number;
     epochDiff: number;
   };
 }
 
-const getCurrentEpoch = () => {
-  const now = Math.floor(Date.now() / 1000);
-  const { start } = getEpochBoundaries(now);
-  return Math.floor((start - INITIAL_EPOCH_TIMESTAMP) / WEEK_IN_SECONDS);
+const getCurrentTimestamp = () => Math.floor(Date.now() / 1000);
+
+const getCurrentEpoch = (protocolId: string) => {
+  const now = getCurrentTimestamp();
+  const protocol = protocols.find((p) => p.id === protocolId);
+  if (!protocol) throw new Error(`Protocol ${protocolId} not found`);
+  return getProtocolEpoch(protocol, now);
 };
 
 export const useEpochStore = create<EpochStore>((set, get) => {
-  // Start auto-sync if we're in a browser environment
-  if (typeof window !== "undefined") {
-    setInterval(() => {
-      const current = getCurrentEpoch();
-      const state = get();
-      // Only update if we're at the current epoch (not manually adjusted)
-      if (state.globalEpoch === current) {
-        set({ globalEpoch: current });
-      }
-    }, 1000);
-  }
-
   return {
-    globalEpoch: getCurrentEpoch(),
+    globalOffset: 0,
     protocolOffsets: {},
 
-    setGlobalEpoch: (epoch: number) => {
-      set({ globalEpoch: epoch });
+    getCurrentTimestamp,
+    getCurrentEpoch,
+
+    getDisplayEpoch: (protocolId: string, useGlobal = false) => {
+      try {
+        const currentEpoch = getCurrentEpoch(protocolId);
+        const globalOffset = get().globalOffset;
+        const protocolOffset = get().protocolOffsets[protocolId] || 0;
+        // When useGlobal is true, only show global offset
+        // When useGlobal is false, show both global AND protocol offset
+        return currentEpoch + globalOffset + (!useGlobal ? protocolOffset : 0);
+      } catch (error) {
+        console.error("Error calculating display epoch:", error);
+        return 0; // Return safe default
+      }
     },
 
-    setProtocolOffset: (protocolId: string, offset: number) => {
+    incrementGlobalEpoch: () => {
       set((state) => ({
-        protocolOffsets: {
-          ...state.protocolOffsets,
-          [protocolId]: offset,
-        },
+        globalOffset: state.globalOffset + 1,
+        // Reset protocol offsets when using global controls
+        protocolOffsets: {},
       }));
     },
 
-    resetAllOffsets: () => {
+    decrementGlobalEpoch: () => {
+      set((state) => ({
+        globalOffset: state.globalOffset - 1,
+        // Reset protocol offsets when using global controls
+        protocolOffsets: {},
+      }));
+    },
+
+    resetGlobalEpoch: () => {
       set({
-        globalEpoch: getCurrentEpoch(),
+        globalOffset: 0,
+        // Reset protocol offsets when resetting global
         protocolOffsets: {},
       });
     },
 
-    getCurrentEpoch,
+    incrementProtocolEpoch: (protocolId: string) => {
+      set((state) => ({
+        protocolOffsets: {
+          ...state.protocolOffsets,
+          [protocolId]: (state.protocolOffsets[protocolId] || 0) + 1,
+        },
+      }));
+    },
 
-    getEpochInfo: (epochNumber: number) => {
-      const currentEpoch = getCurrentEpoch();
-      const epochTimestamp =
-        INITIAL_EPOCH_TIMESTAMP + epochNumber * WEEK_IN_SECONDS;
-      const { start, end } = getEpochBoundaries(epochTimestamp);
-      return {
-        epochStart: start,
-        epochEnd: end,
-        epochDiff: epochNumber - currentEpoch,
-      };
+    decrementProtocolEpoch: (protocolId: string) => {
+      set((state) => ({
+        protocolOffsets: {
+          ...state.protocolOffsets,
+          [protocolId]: (state.protocolOffsets[protocolId] || 0) - 1,
+        },
+      }));
+    },
+
+    resetProtocolEpoch: (protocolId: string) => {
+      set((state) => ({
+        protocolOffsets: {
+          ...state.protocolOffsets,
+          [protocolId]: 0,
+        },
+      }));
+    },
+
+    setProtocolEpoch: (protocolId: string, targetEpoch: number) => {
+      try {
+        const currentEpoch = getCurrentEpoch(protocolId);
+        const globalOffset = get().globalOffset;
+        // Account for global offset when setting protocol offset
+        set((state) => ({
+          protocolOffsets: {
+            ...state.protocolOffsets,
+            [protocolId]: targetEpoch - currentEpoch - globalOffset,
+          },
+        }));
+      } catch (error) {
+        console.error("Error setting protocol epoch:", error);
+      }
+    },
+
+    getEpochInfo: (protocolId: string, epochNumber: number) => {
+      try {
+        const protocol = protocols.find((p) => p.id === protocolId);
+        if (!protocol) throw new Error(`Protocol ${protocolId} not found`);
+
+        const currentEpoch = getCurrentEpoch(protocolId);
+
+        // Calculate the timestamp for this epoch
+        const epochDiff = epochNumber - currentEpoch;
+        const epochTimestamp =
+          protocol.referenceTimestamp +
+          (epochNumber - protocol.referenceEpoch) * WEEK_IN_SECONDS;
+        const { start, end } = getEpochBoundaries(epochTimestamp);
+
+        return {
+          epochStart: start,
+          epochEnd: end,
+          epochDiff,
+        };
+      } catch (error) {
+        console.error("Error getting epoch info:", error);
+        return {
+          epochStart: 0,
+          epochEnd: 0,
+          epochDiff: 0,
+        };
+      }
     },
   };
 });

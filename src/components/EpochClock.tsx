@@ -7,37 +7,48 @@ import { formatUnixTimestamp, copyToClipboard } from "@/lib/utils";
 import { Copy, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEpochStore } from "@/lib/stores/useEpochStore";
 import { useToast } from "@/lib/hooks/ToastContext";
+import { protocols } from "@/config/protocols";
 
 export function EpochClock() {
   const { theme } = useTheme();
   const { success } = useToast();
   const { 
-    globalEpoch,
-    setGlobalEpoch,
-    getCurrentEpoch,
+    getCurrentTimestamp,
+    getDisplayEpoch,
     getEpochInfo,
-    resetAllOffsets
+    decrementGlobalEpoch,
+    incrementGlobalEpoch,
+    resetGlobalEpoch
   } = useEpochStore();
 
-  const currentTimestamp = Math.floor(Date.now() / 1000);
-  const { epochStart, epochEnd, epochDiff } = getEpochInfo(globalEpoch);
+  // Use the first protocol as reference for global clock
+  const referenceProtocol = protocols[0];
+  const currentTimestamp = getCurrentTimestamp();
+  const displayEpoch = getDisplayEpoch(referenceProtocol.id, true); // true = use global offset
+
+  const { epochStart, epochEnd, epochDiff } = getEpochInfo(
+    referenceProtocol.id,
+    displayEpoch
+  );
 
   const handlePreviousEpoch = () => {
-    setGlobalEpoch(globalEpoch - 1);
+    decrementGlobalEpoch();
   };
 
   const handleNextEpoch = () => {
-    setGlobalEpoch(globalEpoch + 1);
+    incrementGlobalEpoch();
   };
 
   const handleResetToCurrentEpoch = () => {
-    setGlobalEpoch(getCurrentEpoch());
-    resetAllOffsets();
+    resetGlobalEpoch();
   };
 
-  const [currentTime, setCurrentTime] = useState(() => new Date());
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    setCurrentTime(new Date());
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
@@ -45,12 +56,16 @@ export function EpochClock() {
   }, []);
 
   const handleCopy = async (text: string) => {
-    if (typeof window === "undefined") return;
-    await copyToClipboard(text);
-    success("Timestamp Copied");
+    try {
+      if (typeof window === "undefined") return;
+      await copyToClipboard(text);
+      success("Timestamp Copied");
+    } catch (error) {
+      console.error("Failed to copy timestamp:", error);
+    }
   };
 
-  const timeString = currentTime.toLocaleString("en-US", {
+  const timeString = currentTime?.toLocaleString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -70,11 +85,13 @@ export function EpochClock() {
           Epoch Explorer
         </h1>
         <div className="space-y-3">
-          <p className={`text-xl font-medium ${
-            theme === 'dark' ? 'text-white/80' : 'text-slate-700'
-          }`}>
-            {timeString}
-          </p>
+          {mounted && (
+            <p className={`text-xl font-medium ${
+              theme === 'dark' ? 'text-white/80' : 'text-slate-700'
+            }`}>
+              {timeString}
+            </p>
+          )}
           <div className="flex items-center justify-center space-x-2">
             <p className={`font-mono text-lg ${
               theme === 'dark' ? 'text-white/70' : 'text-slate-600'
@@ -175,19 +192,27 @@ export function EpochClock() {
                 <ChevronRight className="h-8 w-8" />
               </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleResetToCurrentEpoch}
-              title="Reset to current epoch"
-              className={`text-sm font-mono ${
+            <div className="relative group">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetToCurrentEpoch}
+                className={`text-sm font-mono group-hover:bg-opacity-20 ${
+                  theme === 'dark'
+                    ? 'text-white/70 hover:text-white hover:bg-white/10'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                }`}
+              >
+                Current Epoch {epochDiff === 0 ? "(0)" : epochDiff > 0 ? `(+${epochDiff})` : `(${epochDiff})`}
+              </Button>
+              <div className={`absolute top-full mt-2 left-1/2 transform -translate-x-1/2 px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 ${
                 theme === 'dark'
-                  ? 'text-white/70 hover:text-white hover:bg-white/10'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-              }`}
-            >
-              Current Epoch {epochDiff === 0 ? "(0)" : epochDiff > 0 ? `(+${epochDiff})` : `(${epochDiff})`}
-            </Button>
+                  ? 'bg-white/10 text-white border border-white/20'
+                  : 'bg-slate-800 text-white'
+              }`}>
+                Click to reset to current epoch
+              </div>
+            </div>
           </div>
         </div>
 
