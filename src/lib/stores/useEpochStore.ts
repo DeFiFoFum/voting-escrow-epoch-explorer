@@ -1,10 +1,6 @@
-import { create } from "zustand";
-import {
-  protocols,
-  getProtocolEpoch,
-  WEEK_IN_SECONDS,
-} from "@/config/protocols";
-import { getEpochBoundaries } from "@/lib/utils";
+import { create } from 'zustand';
+import { protocols, getProtocolEpoch, WEEK_IN_SECONDS } from '@/config/protocols';
+import { getEpochBoundaries } from '@/lib/utils';
 
 interface EpochStore {
   globalOffset: number;
@@ -55,7 +51,7 @@ export const useEpochStore = create<EpochStore>((set, get) => {
         // When useGlobal is false, show both global AND protocol offset
         return currentEpoch + globalOffset + (!useGlobal ? protocolOffset : 0);
       } catch (error) {
-        console.error("Error calculating display epoch:", error);
+        console.error('Error calculating display epoch:', error);
         return 0; // Return safe default
       }
     },
@@ -63,16 +59,16 @@ export const useEpochStore = create<EpochStore>((set, get) => {
     incrementGlobalEpoch: () => {
       set((state) => ({
         globalOffset: state.globalOffset + 1,
-        // Reset protocol offsets when using global controls
-        protocolOffsets: {},
+        // Maintain protocol offsets when using global controls
+        protocolOffsets: state.protocolOffsets,
       }));
     },
 
     decrementGlobalEpoch: () => {
       set((state) => ({
         globalOffset: state.globalOffset - 1,
-        // Reset protocol offsets when using global controls
-        protocolOffsets: {},
+        // Maintain protocol offsets when using global controls
+        protocolOffsets: state.protocolOffsets,
       }));
     },
 
@@ -123,7 +119,7 @@ export const useEpochStore = create<EpochStore>((set, get) => {
           },
         }));
       } catch (error) {
-        console.error("Error setting protocol epoch:", error);
+        console.error('Error setting protocol epoch:', error);
       }
     },
 
@@ -137,8 +133,7 @@ export const useEpochStore = create<EpochStore>((set, get) => {
         // Calculate the timestamp for this epoch
         const epochDiff = epochNumber - currentEpoch;
         const epochTimestamp =
-          protocol.referenceTimestamp +
-          (epochNumber - protocol.referenceEpoch) * WEEK_IN_SECONDS;
+          protocol.referenceTimestamp + (epochNumber - protocol.referenceEpoch) * WEEK_IN_SECONDS;
         const { start, end } = getEpochBoundaries(epochTimestamp);
 
         return {
@@ -147,7 +142,7 @@ export const useEpochStore = create<EpochStore>((set, get) => {
           epochDiff,
         };
       } catch (error) {
-        console.error("Error getting epoch info:", error);
+        console.error('Error getting epoch info:', error);
         return {
           epochStart: 0,
           epochEnd: 0,
