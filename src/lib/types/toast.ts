@@ -1,4 +1,4 @@
-export type ToastType = "success" | "error" | "info" | "warning";
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 export interface ToastConfig {
   duration?: number; // in milliseconds, default 1500

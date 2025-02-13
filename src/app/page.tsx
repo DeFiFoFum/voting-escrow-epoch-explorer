@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { EpochClock } from "@/components/EpochClock";
-import { ProtocolCard } from "@/components/ProtocolCard";
-import { protocols } from "@/config/protocols";
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
-import { useTheme } from "@/lib/hooks/useTheme";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { EpochClock } from '@/components/EpochClock';
+import { ProtocolCard } from '@/components/ProtocolCard';
+import { protocols } from '@/config/protocols';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
+import { useTheme } from '@/lib/hooks/useTheme';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function Home() {
   const { theme } = useTheme();
@@ -20,26 +20,26 @@ export default function Home() {
   return (
     <main className="relative min-h-screen overflow-hidden">
       {/* Dark theme gradient */}
-      <div 
+      <div
         className={`absolute inset-0 transition-opacity duration-500 ${
           theme === 'dark' ? 'opacity-100' : 'opacity-0'
         }`}
         style={{
           background: 'linear-gradient(-45deg, #0F172A, #1E293B, #0D1B2A, #1F2937)',
           backgroundSize: '400% 400%',
-          animation: 'gradient 15s ease infinite'
+          animation: 'gradient 15s ease infinite',
         }}
       />
-      
+
       {/* Light theme gradient */}
-      <div 
+      <div
         className={`absolute inset-0 transition-opacity duration-500 ${
           theme === 'light' ? 'opacity-100' : 'opacity-0'
         }`}
         style={{
           background: 'linear-gradient(-45deg, #EFF6FF, #F8FAFC, #F0F9FF, #FFFFFF)',
           backgroundSize: '400% 400%',
-          animation: 'gradient 15s ease infinite'
+          animation: 'gradient 15s ease infinite',
         }}
       />
 
@@ -55,11 +55,11 @@ export default function Home() {
         <div className="mt-12 max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <div className="w-full text-center">
-              <h2 className={`text-2xl font-bold ${
-                theme === 'dark' 
-                  ? 'text-white/90' 
-                  : 'text-slate-900'
-              }`}>
+              <h2
+                className={`text-2xl font-bold ${
+                  theme === 'dark' ? 'text-white/90' : 'text-slate-900'
+                }`}
+              >
                 Protocols
               </h2>
             </div>
@@ -82,10 +82,7 @@ export default function Home() {
 
           <div className="grid gap-4">
             {protocols.map((protocol) => (
-              <ProtocolCard
-                key={protocol.id}
-                protocol={protocol}
-              />
+              <ProtocolCard key={protocol.id} protocol={protocol} />
             ))}
           </div>
         </div>

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useState, useCallback } from "react";
-import { Toast, ToastConfig } from "../types/toast";
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { Toast, ToastConfig } from '../types/toast';
 
 interface ToastContextType {
   toasts: Toast[];
@@ -18,7 +18,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const showToast = useCallback((message: string, config: ToastConfig = {}) => {
-    const { duration = 1500, type = "info" } = config;
+    const { duration = 1500, type = 'info' } = config;
     const id = Date.now().toString();
 
     setToasts((prev) => [...prev, { id, message, type }]);
@@ -28,33 +28,27 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const success = useCallback(
-    (message: string, config?: ToastConfig) =>
-      showToast(message, { ...config, type: "success" }),
+    (message: string, config?: ToastConfig) => showToast(message, { ...config, type: 'success' }),
     [showToast]
   );
 
   const error = useCallback(
-    (message: string, config?: ToastConfig) =>
-      showToast(message, { ...config, type: "error" }),
+    (message: string, config?: ToastConfig) => showToast(message, { ...config, type: 'error' }),
     [showToast]
   );
 
   const info = useCallback(
-    (message: string, config?: ToastConfig) =>
-      showToast(message, { ...config, type: "info" }),
+    (message: string, config?: ToastConfig) => showToast(message, { ...config, type: 'info' }),
     [showToast]
   );
 
   const warning = useCallback(
-    (message: string, config?: ToastConfig) =>
-      showToast(message, { ...config, type: "warning" }),
+    (message: string, config?: ToastConfig) => showToast(message, { ...config, type: 'warning' }),
     [showToast]
   );
 
   return (
-    <ToastContext.Provider
-      value={{ toasts, showToast, success, error, info, warning }}
-    >
+    <ToastContext.Provider value={{ toasts, showToast, success, error, info, warning }}>
       {children}
     </ToastContext.Provider>
   );
@@ -63,7 +57,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 export function useToast() {
   const context = useContext(ToastContext);
   if (context === undefined) {
-    throw new Error("useToast must be used within a ToastProvider");
+    throw new Error('useToast must be used within a ToastProvider');
   }
   return context;
 }

@@ -1,4 +1,4 @@
-import { Config, Protocol, validateConfig } from "./schema";
+import { Config, Protocol, validateConfig } from './schema';
 
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
@@ -20,26 +20,26 @@ function getRelativeEpoch(timestamp: number, currentTime: number): number {
 const config: Config = {
   protocols: [
     {
-      id: "alpha",
-      name: "Protocol Alpha",
-      color: "#3B82F6", // blue-500
-      logo: "/protocol-alpha.svg",
+      id: 'alpha',
+      name: 'Protocol Alpha',
+      color: '#3B82F6', // blue-500
+      logo: '/protocol-alpha.svg',
       referenceTimestamp: alignToWeekBoundary(1707350400), // Feb 8, 2024 00:00:00 UTC
       referenceEpoch: 0,
     },
     {
-      id: "beta",
-      name: "Protocol Beta",
-      color: "#10B981", // emerald-500
-      logo: "/protocol-beta.svg",
+      id: 'beta',
+      name: 'Protocol Beta',
+      color: '#10B981', // emerald-500
+      logo: '/protocol-beta.svg',
       referenceTimestamp: alignToWeekBoundary(1707955200), // Feb 15, 2024 00:00:00 UTC
       referenceEpoch: 0,
     },
     {
-      id: "gamma",
-      name: "Protocol Gamma",
-      color: "#8B5CF6", // violet-500
-      logo: "/protocol-gamma.svg",
+      id: 'gamma',
+      name: 'Protocol Gamma',
+      color: '#8B5CF6', // violet-500
+      logo: '/protocol-gamma.svg',
       referenceTimestamp: alignToWeekBoundary(1708560000), // Feb 22, 2024 00:00:00 UTC
       referenceEpoch: 0,
     },

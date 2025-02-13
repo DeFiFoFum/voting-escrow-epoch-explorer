@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useTheme } from "@/lib/hooks/useTheme";
-import { ToastType } from "@/lib/types/toast";
+import { useTheme } from '@/lib/hooks/useTheme';
+import { ToastType } from '@/lib/types/toast';
 
 interface ToastProps {
   message: string;
@@ -12,10 +12,10 @@ export function Toast({ message, type }: ToastProps) {
   const { theme } = useTheme();
 
   const styles = {
-    success: "bg-green-500/90",
-    error: "bg-red-500/90",
-    info: "bg-blue-500/90",
-    warning: "bg-yellow-500/90",
+    success: 'bg-green-500/90',
+    error: 'bg-red-500/90',
+    info: 'bg-blue-500/90',
+    warning: 'bg-yellow-500/90',
   };
 
   return (
@@ -26,7 +26,7 @@ export function Toast({ message, type }: ToastProps) {
         text-white backdrop-blur-md
         animate-toast-slide
         ${styles[type]}
-        ${theme === "dark" ? "shadow-lg border border-white/10" : "shadow-xl"}
+        ${theme === 'dark' ? 'shadow-lg border border-white/10' : 'shadow-xl'}
       `}
     >
       {message}

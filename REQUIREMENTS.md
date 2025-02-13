@@ -27,8 +27,9 @@
 
 ```typescript
 interface EpochStore {
-  globalOffset: number;           // Affects all protocols
-  protocolOffsets: {             // Individual protocol offsets
+  globalOffset: number; // Affects all protocols
+  protocolOffsets: {
+    // Individual protocol offsets
     [protocolId: string]: number;
   };
 }
@@ -39,7 +40,7 @@ interface EpochStore {
 - When using global controls, the formula is:
 
   ```typescript
-  displayEpoch = currentEpoch + globalOffset + protocolOffset
+  displayEpoch = currentEpoch + globalOffset + protocolOffset;
   ```
 
 - Global controls modify globalOffset which affects all protocols
