@@ -69,15 +69,15 @@ The system will:
 
    ```typescript
    // development.ts
-   import { Config } from "../schema";
-   
+   import { Config } from '../schema';
+
    export const config: Config = {
      protocols: [
        {
-         id: "alpha",
-         name: "Protocol Alpha",
-         color: "#3B82F6",
-         logo: "/protocol-alpha.svg",
+         id: 'alpha',
+         name: 'Protocol Alpha',
+         color: '#3B82F6',
+         logo: '/protocol-alpha.svg',
          referenceTimestamp: 1707350400, // Feb 8, 2024 00:00:00 UTC
          referenceEpoch: 0,
        },
